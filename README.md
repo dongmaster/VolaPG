@@ -1,2 +1,2 @@
 #Volafile Privacy Guard
-##PGP for Volafile 
+PGP for Volafile 
