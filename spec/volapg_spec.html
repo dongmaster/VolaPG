@@ -1,0 +1,424 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="stylesheet.css" type="text/css" />
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#volapg-vpg-specification"><span class="toc-section-number">1</span> VolaPG (vpg) Specification</a><ul>
+<li><a href="#todo"><span class="toc-section-number">1.1</span> TODO <a name="todo"></a></a></li>
+<li><a href="#conventions-used-in-this-document"><span class="toc-section-number">1.2</span> Conventions used in this document <a name="conventions"></a></a></li>
+<li><a href="#definitions"><span class="toc-section-number">1.3</span> Definitions <a name="definitions"></a></a><ul>
+<li><a href="#user"><span class="toc-section-number">1.3.1</span> user <a name="definitions-user"></a></a></li>
+<li><a href="#alias"><span class="toc-section-number">1.3.2</span> alias <a name="definitions-alias"></a></a></li>
+<li><a href="#alias-table"><span class="toc-section-number">1.3.3</span> alias table <a name="definitions-alias_table"></a></a></li>
+<li><a href="#user-table"><span class="toc-section-number">1.3.4</span> user table <a name="definitions-user_table"></a></a></li>
+<li><a href="#key-pair-list"><span class="toc-section-number">1.3.5</span> key pair list <a name="definitions-certificate_list"></a></a></li>
+<li><a href="#key-list"><span class="toc-section-number">1.3.6</span> key list <a name="definitions-key_list"></a></a></li>
+<li><a href="#alias-list"><span class="toc-section-number">1.3.7</span> alias list <a name="definitions-alias_list"></a></a></li>
+<li><a href="#vpg-room"><span class="toc-section-number">1.3.8</span> vpg room <a name="definitions-vpg_room"></a></a></li>
+<li><a href="#ciphertext-file"><span class="toc-section-number">1.3.9</span> ciphertext file <a name="definitions-ciphertext_file"></a></a></li>
+</ul></li>
+<li><a href="#how-it-works"><span class="toc-section-number">1.4</span> How it works <a name="how_it_works"></a></a></li>
+<li><a href="#procedures"><span class="toc-section-number">1.5</span> Procedures <a name="procedures"></a></a><ul>
+<li><a href="#general"><span class="toc-section-number">1.5.1</span> General <a name="procedures-general"></a></a></li>
+<li><a href="#decryption-triggered-automatically"><span class="toc-section-number">1.5.2</span> Decryption <a name="prodecures-decryption"></a> (triggered automatically)</a></li>
+</ul></li>
+<li><a href="#commands"><span class="toc-section-number">1.6</span> Commands <a name="commands"></a></a><ul>
+<li><a href="#encrypt"><span class="toc-section-number">1.6.1</span> encrypt <a name="commands-encrypt"></a></a></li>
+<li><a href="#addkey"><span class="toc-section-number">1.6.2</span> addkey <a name="commands-addkey"></a></a></li>
+<li><a href="#rmkey"><span class="toc-section-number">1.6.3</span> rmkey <a name="commands-rmkey"></a></a></li>
+<li><a href="#newkeypair"><span class="toc-section-number">1.6.4</span> newkeypair <a name="commands-newkeypair"></a></a></li>
+<li><a href="#room"><span class="toc-section-number">1.6.5</span> room <a name="commands-room"></a></a></li>
+</ul></li>
+<li><a href="#possible-implementation"><span class="toc-section-number">1.7</span> Possible implementation</a><ul>
+<li><a href="#settings"><span class="toc-section-number">1.7.1</span> Settings</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<h1 id="volapg-vpg-specification"><span class="header-section-number">1</span> VolaPG (vpg) Specification</h1>
+<h2 id="todo"><span class="header-section-number">1.1</span> TODO <a name="todo"></a></h2>
+<ul>
+<li>cache already decrypted messages</li>
+<li>decrypt links from registered users only by default; can be turned on for anonymous users (<code>WARNING</code>: they can change nicknames)</li>
+</ul>
+<h2 id="conventions-used-in-this-document"><span class="header-section-number">1.2</span> Conventions used in this document <a name="conventions"></a></h2>
+<ul>
+<li><code>?</code> – zero or one, i.e. optional</li>
+<li><code>*</code> – zero or more</li>
+<li><code>+</code> – one or more</li>
+<li><code>[a-z]</code> – character set (i.e. “any of these characters”)</li>
+<li><code>&lt;expr&gt;{n,m}</code> – minimum of n expr, maximum of m expr</li>
+</ul>
+<h2 id="definitions"><span class="header-section-number">1.3</span> Definitions <a name="definitions"></a></h2>
+<h3 id="user"><span class="header-section-number">1.3.1</span> user <a name="definitions-user"></a></h3>
+<ul>
+<li>represents a volafile user, registered or not</li>
+<li>the user’s name mustn’t contain spaces and must be at least 3 and at most 12 characters long</li>
+</ul>
+<h4 id="grammar"><span class="header-section-number">1.3.1.1</span> Grammar <a name="definitions-user-grammar"></a></h4>
+<ul>
+<li><code>user_name := [a-zA-Z0-9]{3,12}</code></li>
+</ul>
+<h3 id="alias"><span class="header-section-number">1.3.2</span> alias <a name="definitions-alias"></a></h3>
+<ul>
+<li>usually, users will only have one public key but this doesn’t have to be the case – that’s why aliases are necessary</li>
+<li>an alias is a name for one of the public keys a user uses – it’s not easy to remember a hexstring with 1000 characters</li>
+<li>no spaces are allowed in the alias’ name</li>
+<li>it’s a string produced by concatenating a user’s name, <code>:</code> character and the alias’ name</li>
+<li>a user’s name can be an alias too (alias with the name <code>default</code> is special) – this is discussed later on in <a href="#definitions-alias_list">alias list</a></li>
+</ul>
+<h4 id="grammar-1"><span class="header-section-number">1.3.2.1</span> Grammar <a name="definitions-alias-grammar"></a></h4>
+<ul>
+<li><code>alias := &lt;user_name&gt; | &lt;user_name&gt; &quot;:&quot; &lt;alias_name&gt;</code></li>
+<li><code>alias_name := [a-zA-z0-9]+</code></li>
+<li><code>user_name</code> – <a href="#definitions-user-grammar">given above</a></li>
+</ul>
+<h4 id="examples"><span class="header-section-number">1.3.2.2</span> Examples <a name="definitions-alias-examples"></a></h4>
+<table>
+<thead>
+<tr class="header">
+<th align="left">#</th>
+<th align="left">alias</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1.</td>
+<td align="left"><code>alice:default</code></td>
+</tr>
+<tr class="even">
+<td align="left">2.</td>
+<td align="left"><code>alice:work</code></td>
+</tr>
+<tr class="odd">
+<td align="left">3.</td>
+<td align="left"><code>joe:home</code></td>
+</tr>
+<tr class="even">
+<td align="left">4.</td>
+<td align="left"><code>joe</code></td>
+</tr>
+<tr class="odd">
+<td align="left">5.</td>
+<td align="left"><code>bob:shitposting</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="alias-table"><span class="header-section-number">1.3.3</span> alias table <a name="definitions-alias_table"></a></h3>
+<ul>
+<li>stores the public keys of a user along with their aliases</li>
+<li>a hash table with (key, value) being (<code>alias_name</code>, <code>pubkey</code>)
+<ul>
+<li><code>alias_name</code> – name of the alias that’s assigned to a specific public key</li>
+<li><code>pubkey</code> – the public key</li>
+</ul></li>
+</ul>
+<h4 id="examples-1"><span class="header-section-number">1.3.3.1</span> Examples <a name="definitions-alias_table-examples"></a></h4>
+<table>
+<thead>
+<tr class="header">
+<th align="left">#</th>
+<th align="left">user’s name</th>
+<th align="left">aliases &amp; public keys</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1.</td>
+<td align="left"><code>bob</code></td>
+<td align="left"><code>default: 135</code>, <code>shitposting: 246</code></td>
+</tr>
+<tr class="even">
+<td align="left">2.</td>
+<td align="left"><code>joe</code></td>
+<td align="left"><code>home: 987</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-table"><span class="header-section-number">1.3.4</span> user table <a name="definitions-user_table"></a></h3>
+<ul>
+<li>stores other users’ public keys used for encryption</li>
+<li>a table of users’ names and their alias tables</li>
+<li>a hash table with (key, value) being (<code>user_name</code>, <code>alias_table</code>)
+<ul>
+<li><code>user_name</code> – the name of the user</li>
+<li><code>alias_table</code> – the alias table of user <user></li>
+</ul></li>
+</ul>
+<h4 id="examples-2"><span class="header-section-number">1.3.4.1</span> Examples <a name="definitions-user_table-examples"></a></h4>
+<table>
+<thead>
+<tr class="header">
+<th align="left">#</th>
+<th align="left">user’s name</th>
+<th align="left">aliases &amp; public keys</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1.1</td>
+<td align="left"><code>alice</code></td>
+<td align="left"><code>default: 123</code>, <code>work: 456</code>, <code>private: 789</code></td>
+</tr>
+<tr class="even">
+<td align="left">1.2</td>
+<td align="left"><code>bob</code></td>
+<td align="left"><code>default: 135</code>, <code>shitposting: 246</code></td>
+</tr>
+<tr class="odd">
+<td align="left">1.3</td>
+<td align="left"><code>joe</code></td>
+<td align="left"><code>home: 987</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-pair-list"><span class="header-section-number">1.3.5</span> key pair list <a name="definitions-certificate_list"></a></h3>
+<ul>
+<li>TODO: fingerprints</li>
+<li>the user running vpg can have multiple key pairs (identities) (analagous to other users having multiple public keys (identities))</li>
+<li>it is a list of (<code>pubkey</code>, <code>privkey</code>) pairs, each representing a key pair
+<ul>
+<li><code>pubkey</code> – the public key of the key pair</li>
+<li><code>private</code> – the private key of the key pair</li>
+</ul></li>
+</ul>
+<h3 id="key-list"><span class="header-section-number">1.3.6</span> key list <a name="definitions-key_list"></a></h3>
+<ul>
+<li>a list of public keys that will be used to encrypt a message</li>
+<li>it is generated from an alias list</li>
+</ul>
+<h3 id="alias-list"><span class="header-section-number">1.3.7</span> alias list <a name="definitions-alias_list"></a></h3>
+<ul>
+<li>an alias list is used to define which public keys to use when encrypting a message, i.e. it is used to generate a key list from a user table</li>
+<li>it’s a string of aliases concatenated with a <code>+</code> character</li>
+<li>aliases which don’t exist won’t be included in the key list</li>
+<li>the alias with the name <code>default</code> is special – if a user’s name is given instead of an alias, the user’s alias table is looked up for an alias with the name <code>default</code>
+<ul>
+<li>i.e. when specifying an alias, <code>bob</code> is the same as <code>bob:default</code></li>
+<li>it is merely a convenience and was introduced because <strong><em>most users</em> will have only one</strong> public key and in that case typing out aliases isn’t really useful (they’re still used under the hood, however)</li>
+<li><strong><code>NOTE</code>: the <code>default</code> alias is not required to exist</strong></li>
+</ul></li>
+<li></li>
+<li>TODO: addkey from registered users only by default</li>
+<li>TODO: renamekey</li>
+<li>TODO: filename length for ciphertext files</li>
+<li>TODO: key pair -&gt; key pair</li>
+</ul>
+<h4 id="grammar-2"><span class="header-section-number">1.3.7.1</span> Grammar <a name="definitions-alias_list-grammar"></a></h4>
+<ul>
+<li><code>alias_list := &lt;alias&gt; (&quot;+&quot; &lt;alias&gt;)*</code></li>
+<li><code>alias</code> – <a href="#definitions-alias-grammar">given above</a></li>
+</ul>
+<h4 id="examples-using-the-user-table-given-in-example-1.-of-user-table"><span class="header-section-number">1.3.7.2</span> Examples <a name="definitions-alias_list-examples"></a> (using the user table given in <a href="#definitions-user_table-examples">example 1. of user table</a>)</h4>
+<table>
+<thead>
+<tr class="header">
+<th align="left">#</th>
+<th align="left">alias list</th>
+<th align="left">same as</th>
+<th align="left">key list</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1.</td>
+<td align="left"><code>alice</code></td>
+<td align="left"><code>alice:default</code></td>
+<td align="left"><code>123</code></td>
+</tr>
+<tr class="even">
+<td align="left">2.</td>
+<td align="left"><code>alice+bob</code></td>
+<td align="left"><code>alice:default+bob:default</code></td>
+<td align="left"><code>123</code>, <code>135</code></td>
+</tr>
+<tr class="odd">
+<td align="left">3.</td>
+<td align="left"><code>bob:shitposting+joe:home</code></td>
+<td align="left">n/a</td>
+<td align="left"><code>246</code>, <code>987</code></td>
+</tr>
+<tr class="even">
+<td align="left">4.</td>
+<td align="left"><code>alice+joe</code></td>
+<td align="left"><code>alice:default+joe:default</code></td>
+<td align="left"><code>123</code></td>
+</tr>
+<tr class="odd">
+<td align="left">5.</td>
+<td align="left"><code>joe</code></td>
+<td align="left"><code>joe:default</code></td>
+<td align="left">(empty)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vpg-room"><span class="header-section-number">1.3.8</span> vpg room <a name="definitions-vpg_room"></a></h3>
+<ul>
+<li>a room to which the files containing ciphertext will be uploaded to</li>
+</ul>
+<h3 id="ciphertext-file"><span class="header-section-number">1.3.9</span> ciphertext file <a name="definitions-ciphertext_file"></a></h3>
+<ul>
+<li>contains the ciphertext</li>
+<li>its filename is derived from
+<ul>
+<li>the users whose public keys were used to encrypt the message</li>
+<li>time when the file was made (when the ciphertext was produced)</li>
+</ul></li>
+</ul>
+<h4 id="grammar-3"><span class="header-section-number">1.3.9.1</span> Grammar <a name="definitions-ciphertext_file-grammar"></a></h4>
+<ul>
+<li><code>filename := &quot;~VPG~&quot; &quot; -- &quot; &lt;user_list&gt; &quot; -- &quot; &lt;unix_timestamp&gt; &quot;.asc&quot;</code></li>
+<li><code>user_list := &lt;user_name&gt; (&quot;, &quot; &lt;user_name&gt;)*</code></li>
+<li><code>unix_timestamp</code> – <a href="https://en.wikipedia.org/wiki/Unix_time">UNIX time</a></li>
+<li><code>user_name</code> – <a href="#definitions-user-grammar">given above</a></li>
+</ul>
+<h2 id="how-it-works"><span class="header-section-number">1.4</span> How it works <a name="how_it_works"></a></h2>
+<ol style="list-style-type: decimal">
+<li>a user encrypts a piece of text with the recipient’s public key</li>
+<li>the ciphertext is put into a file and uploaded to volafile</li>
+<li>the file has a special name and can be identified by the recipient as a vpg ciphertext file</li>
+<li>the recipient downloads the file, gets the ciphertext and decrypts it using his private key</li>
+<li>the recipient can now see the message the user sent him</li>
+</ol>
+<h2 id="procedures"><span class="header-section-number">1.5</span> Procedures <a name="procedures"></a></h2>
+<h3 id="general"><span class="header-section-number">1.5.1</span> General <a name="procedures-general"></a></h3>
+<ul>
+<li>encryption is triggered by the user via a command</li>
+<li>decryption is triggered automatically when a ciphertext file is identified</li>
+</ul>
+<h3 id="decryption-triggered-automatically"><span class="header-section-number">1.5.2</span> Decryption <a name="prodecures-decryption"></a> (triggered automatically)</h3>
+<ol style="list-style-type: decimal">
+<li>the script detects that a ciphertext file was linked in the chat (via the filename)</li>
+<li>if the filename contains our username
+<ol style="list-style-type: decimal">
+<li>if the ciphertext file hasn’t been decrypted before (i.e. if it’s not cached)
+<ol style="list-style-type: decimal">
+<li>the ciphertext file is downloaded if its size doesn’t exceed 5 KiB</li>
+<li>the ciphertext file’s content is decrypted with the user’s private key</li>
+<li>the ciphertext file’s filename and the plaintext are cached</li>
+</ol></li>
+<li>the file link in the chat is replaced by the plaintext</li>
+</ol></li>
+</ol>
+<h2 id="commands"><span class="header-section-number">1.6</span> Commands <a name="commands"></a></h2>
+<ul>
+<li>commands are invoked with <code>/vpg &lt;command&gt; &lt;param&gt;*</code></li>
+<li>parameters listed for each of the commands below appear in the order they’re expected by the command</li>
+<li><code>TODO</code>: move the description of commands somewhere else? section Command explanation?</li>
+</ul>
+<h3 id="encrypt"><span class="header-section-number">1.6.1</span> encrypt <a name="commands-encrypt"></a></h3>
+<ul>
+<li>encrypts a message with the specified keys</li>
+</ul>
+<h4 id="parameters"><span class="header-section-number">1.6.1.1</span> Parameters <a name="commands-encrypt-parameters"></a></h4>
+<ul>
+<li><code>alias_list</code> – defines which keys the message will be encrypted with</li>
+<li><code>text</code> – the text to encrypt; quoted if it has spaces</li>
+</ul>
+<h4 id="procedure"><span class="header-section-number">1.6.1.2</span> Procedure <a name="commands-encrypt-procedure"></a></h4>
+<ol style="list-style-type: decimal">
+<li>user runs the encryption command</li>
+<li>the text is encrypted with the specified public keys</li>
+<li>a ciphertext file is made</li>
+<li>the ciphertext file is uploaded to the vpg room</li>
+<li>a text message containing the link of the ciphertext file is output in the current room</li>
+</ol>
+<h3 id="addkey"><span class="header-section-number">1.6.2</span> addkey <a name="commands-addkey"></a></h3>
+<ul>
+<li>adds or updates a user’s key in the user table</li>
+</ul>
+<h4 id="parameters-1"><span class="header-section-number">1.6.2.1</span> Parameters <a name="commands-addkey-parameters"></a></h4>
+<ul>
+<li><code>file</code> – the file that contains the public key of the user (<code>TODO</code>: define what a file is, a full link or just an id like #fhsfhsd)</li>
+<li><code>user</code> – the name of the user</li>
+<li><code>alias?</code> (<code>default</code> by default) – the alias to use for this key</li>
+</ul>
+<h4 id="procedure-1"><span class="header-section-number">1.6.2.2</span> Procedure <a name="commands-addkey-procedure"></a></h4>
+<ol style="list-style-type: decimal">
+<li>the public key is extracted from the specified file</li>
+<li>if the specified user already exists in our user table
+<ol style="list-style-type: decimal">
+<li>if the specified alias already exists in the specified user’s alias table
+<ol style="list-style-type: decimal">
+<li>replace the existing alias with the new alias <code>alias</code></li>
+</ol></li>
+<li>otherwise
+<ol style="list-style-type: decimal">
+<li>create a new alias <code>alias</code></li>
+</ol></li>
+</ol></li>
+<li>otherwise
+<ol style="list-style-type: decimal">
+<li>create a new user <code>user</code> and create a new alias <code>alias</code> for him</li>
+</ol></li>
+</ol>
+<h3 id="rmkey"><span class="header-section-number">1.6.3</span> rmkey <a name="commands-rmkey"></a></h3>
+<ul>
+<li>removes either a user’s key or the whole user from the user table</li>
+</ul>
+<h4 id="parameters-2"><span class="header-section-number">1.6.3.1</span> Parameters <a name="commands-rmkey-parameters"></a></h4>
+<ul>
+<li><code>user</code> – the name of the user</li>
+<li><code>alias?</code> (no default) – alias of the public key to remove</li>
+</ul>
+<h4 id="procedure-2"><span class="header-section-number">1.6.3.2</span> Procedure <a name="commands-rmkey-procedure"></a></h4>
+<ol style="list-style-type: decimal">
+<li>if the user <code>user</code> exists
+<ol style="list-style-type: decimal">
+<li>if <code>alias</code> was specified
+<ol style="list-style-type: decimal">
+<li>if alias <code>alias</code> exists
+<ol style="list-style-type: decimal">
+<li>remove alias <code>alias</code> from user <code>user</code>’s alias table</li>
+</ol></li>
+</ol></li>
+<li>otherwise
+<ol style="list-style-type: decimal">
+<li>remove the whole user from the user table (<code>TODO</code>: confirmation maybe?)</li>
+</ol></li>
+</ol></li>
+</ol>
+<h3 id="newkeypair"><span class="header-section-number">1.6.4</span> newkeypair <a name="commands-newkeypair"></a></h3>
+<ul>
+<li>creates a new key pair (this is so users don’t have to download a pgp implementation and do it themselves)</li>
+</ul>
+<h4 id="parameters-3"><span class="header-section-number">1.6.4.1</span> Parameters <a name="commands-newkeypair-parameters"></a></h4>
+<ul>
+<li><code>name</code> – name assigned to the the key pair</li>
+<li><code>email</code> – email assigned to the key pair (<code>TODO</code>: is email required?)</li>
+<li><code>passphrase</code> – passphrase used for the private key</li>
+<li><code>comment?</code> (<code>&quot;&quot;</code> by default) – comment assigned to the key pair</li>
+</ul>
+<h4 id="procedure-3"><span class="header-section-number">1.6.4.2</span> Procedure</h4>
+<ol style="list-style-type: decimal">
+<li>a new key pair is created with the specified parameters</li>
+<li></li>
+</ol>
+<h3 id="room"><span class="header-section-number">1.6.5</span> room <a name="commands-room"></a></h3>
+<ul>
+<li>sets a new vpg room</li>
+</ul>
+<h4 id="parameters-4"><span class="header-section-number">1.6.5.1</span> Parameters <a name="commands-room-parameters"></a></h4>
+<ul>
+<li><code>room</code> – ID of the room that will be set as the vpg room</li>
+</ul>
+<h2 id="possible-implementation"><span class="header-section-number">1.7</span> Possible implementation</h2>
+<h3 id="settings"><span class="header-section-number">1.7.1</span> Settings</h3>
+<ul>
+<li>whitenames allowed</li>
+<li>vpg room</li>
+<li>user table</li>
+<li>self table</li>
+<li><p>encrypt with self key by default</p></li>
+<li><p>passphrase popup should give info about cert</p></li>
+</ul>
+</body>
+</html>
